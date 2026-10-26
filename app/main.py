@@ -4,6 +4,9 @@ from fastapi import FastAPI
 
 from app.database import async_engine
 from app.models import Base
+from app.routers.record import router as record_router
+from app.routers.subtheme import router as subtheme_router
+from app.routers.theme import router as theme_router
 
 
 @asynccontextmanager
@@ -15,3 +18,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="oj", lifespan=lifespan)
+
+app.include_router(theme_router)
+app.include_router(subtheme_router)
+app.include_router(record_router)
