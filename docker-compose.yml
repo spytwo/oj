@@ -7,3 +7,15 @@ services:
     volumes:
       - ./data:/app/data
   
+  
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: oj-frontend
+    ports:
+      - "127.0.0.1:8550:8550"
+    environment:
+      API_URL: http://app:8018
+    depends_on:
+      - app

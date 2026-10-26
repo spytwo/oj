@@ -5,6 +5,14 @@ requires-python = ">=3.13"
 dependencies = [
     "aiosqlite>=0.22.1",
     "fastapi>=0.162.0",
+    "flet>=1.0.5",
+    "httpx>=0.28.1",
     "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "flet-cli>=1.0.5",
+    "flet-web>=1.0.5",
 ]
