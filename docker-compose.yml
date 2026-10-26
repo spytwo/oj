@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    container_name: oj
+    ports:
+      - "127.0.0.1:8018:8018"
+    volumes:
+      - ./data:/app/data
+  
