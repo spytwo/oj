@@ -1,10 +1,11 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import flet as ft
 import httpx
 
 API_URL = os.getenv("API_URL", "http://oj:8018")
+LOCAL_TIMEZONE = timezone(timedelta(hours=5))
 
 
 class OJApp:
@@ -16,8 +17,9 @@ class OJApp:
 
         self.header = ft.Text(
             value="Темы",
-            size=24,
+            size=26,
             weight=ft.FontWeight.BOLD,
+            color=ft.Colors.INDIGO_700,
         )
 
         self.back_button = ft.TextButton(
@@ -28,28 +30,35 @@ class OJApp:
 
         self.input_field = ft.TextField(
             label="Название темы",
+            hint_text="Введите название...",
             expand=True,
             on_submit=self.add_item,
+            filled=True,
+            bgcolor=ft.Colors.GREY_50,
+            border=ft.OutlineInputBorder(
+                border_radius=14,
+            ),
         )
 
         self.add_button = ft.Button(
             content="Добавить",
+            icon=ft.Icons.ADD,
             on_click=self.add_item,
         )
 
         self.items_list = ft.ListView(
             expand=True,
-            spacing=6,
+            spacing=10,
+            padding=4,
         )
 
         self.status_text = ft.Text(
             value="",
-            color="red",
+            color=ft.Colors.RED,
             selectable=True,
         )
 
         self.build_ui()
-
         self.app_page.run_task(self.load_themes)
 
     # --------------------------------------------------
@@ -65,15 +74,16 @@ class OJApp:
                             self.back_button,
                             self.header,
                         ],
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     ft.Row(
                         controls=[
                             self.input_field,
                             self.add_button,
                         ],
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                     self.status_text,
-                    ft.Divider(),
                     self.items_list,
                 ],
                 expand=True,
@@ -96,11 +106,36 @@ class OJApp:
         if not value:
             return ""
 
+        months = [
+            "января",
+            "февраля",
+            "марта",
+            "апреля",
+            "мая",
+            "июня",
+            "июля",
+            "августа",
+            "сентября",
+            "октября",
+            "ноября",
+            "декабря",
+        ]
+
         try:
             parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-            return parsed.strftime("%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            return str(value)[:19].replace("T", " ")
+
+            # Если API вернул время без часового пояса,
+            # считаем его временем UTC.
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+
+            local_time = parsed.astimezone(LOCAL_TIMEZONE)
+            month = months[local_time.month - 1]
+
+            return f"{local_time.day} {month} {local_time.year} г., {local_time:%H:%M}"
+
+        except (ValueError, TypeError):
+            return str(value)
 
     def set_header(
         self,
@@ -115,39 +150,105 @@ class OJApp:
     def clear_list(self):
         self.items_list.controls.clear()
 
+    # --------------------------------------------------
+    # Карточки тем и подтем
+    # --------------------------------------------------
+
     def make_item(
         self,
         name: str,
         created_at: str = "",
         on_click=None,
     ):
-        row_controls = [
-            ft.Text(
-                value=name,
-                expand=True,
-                selectable=True,
-            ),
-        ]
+        details = []
 
         if created_at:
-            row_controls.append(
+            details.append(
                 ft.Text(
                     value=self.format_date(created_at),
                     size=12,
-                    color="grey",
+                    color=ft.Colors.OUTLINE,
                 )
             )
 
-        if on_click is not None:
-            row_controls.append(ft.Icon(ft.Icons.CHEVRON_RIGHT))
-
-        return ft.Button(
+        return ft.Container(
             content=ft.Row(
-                controls=row_controls,
+                controls=[
+                    ft.Column(
+                        controls=[
+                            ft.Text(
+                                value=name,
+                                size=16,
+                                weight=ft.FontWeight.W_500,
+                                selectable=True,
+                            ),
+                            *details,
+                        ],
+                        spacing=5,
+                        expand=True,
+                    ),
+                    ft.Icon(
+                        ft.Icons.CHEVRON_RIGHT,
+                        color=ft.Colors.OUTLINE,
+                    )
+                    if on_click is not None
+                    else ft.Container(),
+                ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
+            padding=14,
+            bgcolor=ft.Colors.WHITE,
+            border=ft.Border.all(
+                1,
+                ft.Colors.GREY_200,
+            ),
+            border_radius=14,
+            ink=True,
             on_click=on_click,
-            expand=True,
+        )
+
+    # --------------------------------------------------
+    # Карточки заметок
+    # --------------------------------------------------
+
+    def make_record_item(
+        self,
+        content: str,
+        created_at: str = "",
+    ):
+        controls = []
+
+        if created_at:
+            controls.append(
+                ft.Text(
+                    value=self.format_date(created_at),
+                    size=12,
+                    color=ft.Colors.OUTLINE,
+                )
+            )
+
+        controls.append(
+            ft.Text(
+                value=content,
+                size=16,
+                selectable=True,
+            )
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=controls,
+                spacing=8,
+                tight=True,
+            ),
+            padding=14,
+            bgcolor=ft.Colors.WHITE,
+            border=ft.Border.all(
+                1,
+                ft.Colors.GREY_200,
+            ),
+            border_radius=14,
         )
 
     # --------------------------------------------------
@@ -218,7 +319,7 @@ class OJApp:
         self.current_subtheme = None
 
         self.set_header(
-            f"Подтемы — {theme['name']}",
+            f"{theme['name']} — Подтемы",
             "Название подтемы",
             True,
         )
@@ -250,15 +351,15 @@ class OJApp:
             )
 
     # --------------------------------------------------
-    # Записи
+    # Заметки
     # --------------------------------------------------
 
     async def load_records(self, subtheme: dict):
         self.current_subtheme = subtheme
 
         self.set_header(
-            f"Записи — {subtheme['name']}",
-            "Текст записи",
+            f"{subtheme['name']} — Записи",
+            "Текст заметки",
             True,
         )
 
@@ -279,8 +380,8 @@ class OJApp:
     def render_records(self, records: list):
         for record in records:
             self.items_list.controls.append(
-                self.make_item(
-                    name=record["content"],
+                self.make_record_item(
+                    content=record["content"],
                     created_at=record.get("created_at", ""),
                 )
             )
@@ -358,7 +459,9 @@ class OJApp:
 
 async def main(page: ft.Page):
     page.title = "OJ"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.bgcolor = ft.Colors.WHITE
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
     page.padding = 20
 
     OJApp(page)
