@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
@@ -73,3 +73,15 @@ async def delete_record(
         raise HTTPException(status_code=404, detail="Record not found")
 
     await repo.delete(record)
+
+
+@router.get("/search", response_model=list[RecordRead])
+async def search_records(
+    q: str = Query(
+        ..., min_length=2, description="Подстрока для поиска (минимум 2 символа)"
+    ),
+    session: AsyncSession = Depends(get_session),
+):
+    repo = RecordRepository(session)
+    records = await repo.search_by_content(q)
+    return records

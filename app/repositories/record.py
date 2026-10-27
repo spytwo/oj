@@ -20,7 +20,7 @@ class RecordRepository:
         return list(result.scalars().all())
 
     async def create(self, content: str, subtheme_id: int) -> Record:
-        record = Record(content=content, subtheme_id=subtheme_id)
+        record = Record(content=content.lower(), subtheme_id=subtheme_id)
         self.session.add(record)
         await self.session.commit()
         await self.session.refresh(record)
@@ -39,3 +39,14 @@ class RecordRepository:
     async def subtheme_exists(self, subtheme_id: int) -> bool:
         subtheme = await self.session.get(Subtheme, subtheme_id)
         return subtheme is not None
+
+    async def search_by_content(self, query: str) -> list[Record]:
+        if len(query) < 2:
+            return []
+        search_term = f"%{query.lower()}%"
+        result = await self.session.execute(
+            select(Record)
+            .where(Record.content.like(search_term))
+            .order_by(Record.created_at.desc())
+        )
+        return list(result.scalars().all())
