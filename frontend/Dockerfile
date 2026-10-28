@@ -11,5 +11,6 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 COPY frontend/main.py /app/main.py
+COPY frontend/assets/ /app/assets/
 EXPOSE 8550
 CMD ["flet", "run", "--web", "--host", "0.0.0.0", "--port", "8550", "main.py"]

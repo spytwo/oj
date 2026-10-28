@@ -158,7 +158,6 @@ class OJApp:
                         ),
                         padding=ft.Padding.only(bottom=4),
                     ),
-                    ft.Divider(height=1, color=ft.Colors.GREY_200),
                     ft.Container(
                         content=ft.Row(
                             controls=[
@@ -833,4 +832,4 @@ async def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    ft.run(main, assets_dir="assets")
