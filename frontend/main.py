@@ -15,10 +15,11 @@ class OJApp:
         self.current_theme = None
         self.current_subtheme = None
         self.is_search_mode = False
+
         self.logo = ft.TextButton(
             content=ft.Text(
-                "OJ",
-                size=24,
+                "Our Journal",
+                size=26,
                 weight=ft.FontWeight.W_700,
                 color=ft.Colors.INDIGO_800,
             ),
@@ -30,30 +31,18 @@ class OJApp:
             ),
         )
 
-        self.section_title = ft.Text(
-            value="",
-            size=16,
-            weight=ft.FontWeight.W_500,
-            color=ft.Colors.GREY_700,
-            visible=False,
-        )
-
-        self.back_button = ft.IconButton(
-            icon=ft.Icons.ARROW_BACK_ROUNDED,
-            icon_size=20,
-            icon_color=ft.Colors.INDIGO_600,
-            tooltip="Назад",
-            visible=False,
-            on_click=self.go_back,
-            style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(radius=10),
-                padding=8,
-            ),
+        # Хлебные крошки
+        self.breadcrumbs_row = ft.Row(
+            controls=[],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=4,
+            wrap=True,
         )
 
         self.search_field = ft.TextField(
             hint_text="Поиск по заметкам…",
-            width=320,
+            expand=True,
             filled=True,
             bgcolor=ft.Colors.WHITE,
             border_radius=12,
@@ -62,45 +51,41 @@ class OJApp:
             content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
             text_size=14,
             cursor_color=ft.Colors.INDIGO_600,
-            prefix_icon=ft.Icons.SEARCH_ROUNDED,
             on_submit=self.do_search,
             height=48,
         )
 
-        self.search_button = ft.FilledButton(
-            content="Поиск",
+        # Кнопка «Поиск» — только иконка, белый фон с рамкой (как «Добавить»)
+        self.search_button = ft.IconButton(
             icon=ft.Icons.SEARCH_ROUNDED,
+            icon_size=24,
+            icon_color=ft.Colors.INDIGO_800,
+            tooltip="Поиск",
             on_click=self.do_search,
             height=48,
+            width=48,
             style=ft.ButtonStyle(
+                bgcolor=ft.Colors.WHITE,
                 shape=ft.RoundedRectangleBorder(radius=12),
-                padding=ft.Padding.symmetric(horizontal=20, vertical=0),
+                padding=ft.Padding.all(12),
+                side=ft.BorderSide(1, ft.Colors.GREY_300),
             ),
         )
 
-        self.input_field = ft.TextField(
-            label="Название темы",
-            expand=True,
-            on_submit=self.add_item,
-            filled=True,
-            bgcolor=ft.Colors.WHITE,
-            border_radius=12,
-            border_color=ft.Colors.GREY_300,
-            focused_border_color=ft.Colors.INDIGO_400,
-            content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
-            text_size=15,
-            cursor_color=ft.Colors.INDIGO_600,
-            height=48,
-        )
-
-        self.add_button = ft.FilledButton(
-            content="Добавить",
+        # Кнопка добавить в виде иконки
+        self.add_button = ft.IconButton(
             icon=ft.Icons.ADD_ROUNDED,
-            on_click=self.add_item,
+            icon_size=24,
+            icon_color=ft.Colors.INDIGO_800,
+            tooltip="Добавить",
+            on_click=lambda e: self.app_page.run_task(self.open_add_dialog),
             height=48,
+            width=48,
             style=ft.ButtonStyle(
+                bgcolor=ft.Colors.WHITE,
                 shape=ft.RoundedRectangleBorder(radius=12),
-                padding=ft.Padding.symmetric(horizontal=18, vertical=0),
+                padding=ft.Padding.all(12),
+                side=ft.BorderSide(1, ft.Colors.GREY_300),
             ),
         )
 
@@ -143,57 +128,62 @@ class OJApp:
         self.app_page.run_task(self.load_themes)
 
     def build_ui(self):
-        self.app_page.add(
-            ft.Column(
-                controls=[
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                self.back_button,
-                                self.logo,
-                                self.section_title,
-                            ],
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=6,
-                        ),
-                        padding=ft.Padding.only(bottom=4),
-                    ),
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                self.search_field,
-                                self.search_button,
-                            ],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=10,
-                        ),
-                        padding=ft.Padding.only(top=10, bottom=6),
-                    ),
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                self.input_field,
-                                self.add_button,
-                            ],
-                            vertical_alignment=ft.CrossAxisAlignment.START,
-                            spacing=10,
-                        ),
-                        padding=ft.Padding.only(top=4, bottom=4),
-                    ),
-                    self.status_text,
-                    ft.Stack(
+        main_column = ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Row(
                         controls=[
-                            self.items_list,
-                            self.empty_state,
+                            self.logo,
+                            self.breadcrumbs_row,
                         ],
-                        expand=True,
+                        alignment=ft.MainAxisAlignment.START,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=4,
                     ),
-                ],
-                expand=True,
-                spacing=6,
-            )
+                    padding=ft.Padding.only(bottom=4),
+                ),
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            self.search_field,
+                            self.search_button,
+                            self.add_button,
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10,
+                    ),
+                    padding=ft.Padding.only(top=6, bottom=6),
+                ),
+                self.status_text,
+                ft.Stack(
+                    controls=[
+                        self.items_list,
+                        self.empty_state,
+                    ],
+                    expand=True,
+                ),
+            ],
+            expand=True,
+            spacing=6,
         )
+
+        centered_container = ft.Container(
+            content=main_column,
+            width=650,
+            alignment=ft.Alignment.TOP_CENTER,
+            expand=True,
+        )
+
+        page_wrapper = ft.Container(
+            content=centered_container,
+            alignment=ft.Alignment.TOP_CENTER,
+            expand=True,
+            padding=ft.Padding.symmetric(horizontal=20, vertical=10),
+        )
+
+        self.app_page.clean()
+        self.app_page.add(page_wrapper)
 
     def update_page(self):
         self.app_page.update()
@@ -247,39 +237,77 @@ class OJApp:
         except (ValueError, TypeError):
             return str(value)
 
-    def set_header(
-        self,
-        section: str,
-        input_label: str,
-        show_back: bool,
-        multiline: bool = False,
-        show_add: bool = True,
-    ):
-        if section:
-            self.section_title.value = section
-            self.section_title.visible = True
-        else:
-            self.section_title.value = ""
-            self.section_title.visible = False
+    def update_breadcrumbs(self):
+        self.breadcrumbs_row.controls.clear()
 
-        self.input_field.label = input_label
-        self.back_button.visible = show_back
+        if self.is_search_mode:
+            self.breadcrumbs_row.controls.append(
+                ft.Text("/ Поиск", size=16, color=ft.Colors.GREY_500)
+            )
+            return
 
-        self.input_field.multiline = multiline
-        self.input_field.shift_enter = multiline
-        self.input_field.hint_text = None
+        # В заметках: тема (ссылка назад) + подтема (текущая)
+        if self.current_subtheme and self.current_theme:
+            theme = self.current_theme
+            subtheme = self.current_subtheme
 
-        if multiline:
-            self.input_field.min_lines = 1
-            self.input_field.max_lines = None
-            self.input_field.height = None
-        else:
-            self.input_field.min_lines = 1
-            self.input_field.max_lines = 1
-            self.input_field.height = 48
+            self.breadcrumbs_row.controls.append(
+                ft.Text("/", size=16, color=ft.Colors.GREY_400)
+            )
+            self.breadcrumbs_row.controls.append(
+                ft.TextButton(
+                    content=ft.Text(
+                        theme["name"],
+                        size=16,
+                        weight=ft.FontWeight.W_500,
+                        color=ft.Colors.INDIGO_700,
+                    ),
+                    on_click=lambda e, t=theme: self.app_page.run_task(
+                        self.load_subthemes, t
+                    ),
+                    style=ft.ButtonStyle(
+                        padding=ft.Padding.symmetric(horizontal=4, vertical=2),
+                        overlay_color=ft.Colors.with_opacity(0.08, ft.Colors.INDIGO),
+                        shape=ft.RoundedRectangleBorder(radius=8),
+                    ),
+                )
+            )
+            self.breadcrumbs_row.controls.append(
+                ft.Text("/", size=16, color=ft.Colors.GREY_400)
+            )
+            self.breadcrumbs_row.controls.append(
+                ft.Text(
+                    subtheme["name"],
+                    size=16,
+                    weight=ft.FontWeight.W_500,
+                    color=ft.Colors.GREY_700,
+                )
+            )
+        # В списке подтем: только тема
+        elif self.current_theme:
+            theme = self.current_theme
 
-        self.input_field.visible = show_add
-        self.add_button.visible = show_add
+            self.breadcrumbs_row.controls.append(
+                ft.Text("/", size=16, color=ft.Colors.GREY_400)
+            )
+            self.breadcrumbs_row.controls.append(
+                ft.TextButton(
+                    content=ft.Text(
+                        theme["name"],
+                        size=16,
+                        weight=ft.FontWeight.W_500,
+                        color=ft.Colors.INDIGO_700,
+                    ),
+                    on_click=lambda e, t=theme: self.app_page.run_task(
+                        self.load_subthemes, t
+                    ),
+                    style=ft.ButtonStyle(
+                        padding=ft.Padding.symmetric(horizontal=4, vertical=2),
+                        overlay_color=ft.Colors.with_opacity(0.08, ft.Colors.INDIGO),
+                        shape=ft.RoundedRectangleBorder(radius=8),
+                    ),
+                )
+            )
 
     def clear_list(self):
         self.items_list.controls.clear()
@@ -464,41 +492,75 @@ class OJApp:
             response.raise_for_status()
             return response
 
-    def _edit_field_for(self, item: dict, item_type: str) -> ft.TextField:
-        is_record = item_type == "record"
-        value = item.get("content") if is_record else item.get("name", "")
-        return ft.TextField(
-            value=value or "",
-            label="Текст заметки" if is_record else "Название",
+    def _close_dialog(self, dialog: ft.AlertDialog):
+        dialog.open = False
+        self.update_page()
+
+    async def open_add_dialog(self):
+        is_record = self.current_subtheme is not None
+
+        if is_record:
+            dialog_title = "Добавить новую заметку"
+            label_text = "Текст заметки"
+        elif self.current_theme:
+            dialog_title = "Добавить новую подтему"
+            label_text = "Название подтемы"
+        else:
+            dialog_title = "Добавить новую тему"
+            label_text = "Название темы"
+
+        input_field = ft.TextField(
+            label=label_text,
             multiline=is_record,
             min_lines=1 if is_record else 1,
-            max_lines=None if is_record else 1,
+            max_lines=10 if is_record else 1,
             expand=True,
             autofocus=True,
             border_radius=12,
         )
 
-    async def _save_edit(self, item: dict, item_type: str, new_value: str):
-        if item_type == "theme":
-            await self.api_patch(f"/themes/{item['id']}", {"name": new_value})
-            await self.load_themes()
-        elif item_type == "subtheme":
-            await self.api_patch(f"/subthemes/{item['id']}", {"name": new_value})
-            if self.current_theme:
-                await self.load_subthemes(self.current_theme)
-        elif item_type == "record":
-            await self.api_patch(f"/records/{item['id']}", {"content": new_value})
-            if self.current_subtheme:
-                await self.load_records(self.current_subtheme)
-            elif self.is_search_mode:
-                await self.do_search()
+        async def on_add(e):
+            text = (input_field.value or "").strip()
+            if not text:
+                return
+            self._close_dialog(dialog)
+            try:
+                await self.create_item(text)
+            except Exception as ex:
+                self.show_error(f"Ошибка при добавлении: {ex}")
 
-    def _close_dialog(self, dialog: ft.AlertDialog):
-        dialog.open = False
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(dialog_title),
+            content=ft.Container(content=input_field, width=400),
+            actions=[
+                ft.TextButton("Отмена", on_click=lambda e: self._close_dialog(dialog)),
+                ft.FilledButton(
+                    "Добавить",
+                    on_click=lambda e: self.app_page.run_task(on_add, e),
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.app_page.overlay.append(dialog)
+        dialog.open = True
         self.update_page()
 
     async def open_edit_dialog(self, item: dict, item_type: str):
-        edit_field = self._edit_field_for(item, item_type)
+        is_record = item_type == "record"
+        value = item.get("content") if is_record else item.get("name", "")
+
+        edit_field = ft.TextField(
+            value=value or "",
+            label="Текст заметки" if is_record else "Название",
+            multiline=is_record,
+            min_lines=1 if is_record else 1,
+            max_lines=10 if is_record else 1,
+            expand=True,
+            autofocus=True,
+            border_radius=12,
+        )
 
         async def on_save(e):
             new_value = (edit_field.value or "").strip()
@@ -506,7 +568,23 @@ class OJApp:
                 return
             self._close_dialog(dialog)
             try:
-                await self._save_edit(item, item_type, new_value)
+                if item_type == "theme":
+                    await self.api_patch(f"/themes/{item['id']}", {"name": new_value})
+                    await self.load_themes()
+                elif item_type == "subtheme":
+                    await self.api_patch(
+                        f"/subthemes/{item['id']}", {"name": new_value}
+                    )
+                    if self.current_theme:
+                        await self.load_subthemes(self.current_theme)
+                elif item_type == "record":
+                    await self.api_patch(
+                        f"/records/{item['id']}", {"content": new_value}
+                    )
+                    if self.current_subtheme:
+                        await self.load_records(self.current_subtheme)
+                    elif self.is_search_mode:
+                        await self.do_search()
             except Exception as ex:
                 self.show_error(f"Ошибка сохранения: {ex}")
 
@@ -528,21 +606,6 @@ class OJApp:
         dialog.open = True
         self.update_page()
 
-    async def _do_delete(self, item: dict, item_type: str):
-        if item_type == "theme":
-            await self.api_delete(f"/themes/{item['id']}")
-            await self.load_themes()
-        elif item_type == "subtheme":
-            await self.api_delete(f"/subthemes/{item['id']}")
-            if self.current_theme:
-                await self.load_subthemes(self.current_theme)
-        elif item_type == "record":
-            await self.api_delete(f"/records/{item['id']}")
-            if self.current_subtheme:
-                await self.load_records(self.current_subtheme)
-            elif self.is_search_mode:
-                await self.do_search()
-
     async def confirm_delete(self, item: dict, item_type: str):
         labels = {"theme": "тему", "subtheme": "подтему", "record": "заметку"}
         label = labels.get(item_type, "элемент")
@@ -553,7 +616,19 @@ class OJApp:
         async def on_delete(e):
             self._close_dialog(dialog)
             try:
-                await self._do_delete(item, item_type)
+                if item_type == "theme":
+                    await self.api_delete(f"/themes/{item['id']}")
+                    await self.load_themes()
+                elif item_type == "subtheme":
+                    await self.api_delete(f"/subthemes/{item['id']}")
+                    if self.current_theme:
+                        await self.load_subthemes(self.current_theme)
+                elif item_type == "record":
+                    await self.api_delete(f"/records/{item['id']}")
+                    if self.current_subtheme:
+                        await self.load_records(self.current_subtheme)
+                    elif self.is_search_mode:
+                        await self.do_search()
             except Exception as ex:
                 self.show_error(f"Ошибка удаления: {ex}")
 
@@ -585,14 +660,7 @@ class OJApp:
             return
 
         self.is_search_mode = True
-
-        self.set_header(
-            "",
-            "",
-            show_back=True,
-            multiline=False,
-            show_add=False,
-        )
+        self.update_breadcrumbs()
 
         self.clear_error()
         self.clear_list()
@@ -600,34 +668,36 @@ class OJApp:
 
         try:
             results = await self.api_get("/search", params={"q": query})
-            self.render_search_results(results)
+            for item in results:
+                content = (
+                    item.get("content")
+                    or item.get("text")
+                    or item.get("name")
+                    or str(item)
+                )
+                created_at = item.get("created_at", "")
+                extra = ""
+                if item.get("theme_name") or item.get("subtheme_name"):
+                    parts = [
+                        p
+                        for p in [item.get("theme_name"), item.get("subtheme_name")]
+                        if p
+                    ]
+                    extra = " / ".join(parts)
+
+                self.items_list.controls.append(
+                    self.make_record_item(
+                        record=item,
+                        content=content,
+                        created_at=created_at,
+                        extra=extra,
+                    )
+                )
         except Exception as ex:
             self.show_error(f"Ошибка поиска: {ex}")
 
         self.update_empty_state("Ничего не найдено")
         self.update_page()
-
-    def render_search_results(self, results: list):
-        for item in results:
-            content = (
-                item.get("content") or item.get("text") or item.get("name") or str(item)
-            )
-            created_at = item.get("created_at", "")
-            extra = ""
-            if item.get("theme_name") or item.get("subtheme_name"):
-                parts = [
-                    p for p in [item.get("theme_name"), item.get("subtheme_name")] if p
-                ]
-                extra = " / ".join(parts)
-
-            self.items_list.controls.append(
-                self.make_record_item(
-                    record=item,
-                    content=content,
-                    created_at=created_at,
-                    extra=extra,
-                )
-            )
 
     async def load_themes(self, e=None):
         self.current_theme = None
@@ -635,187 +705,102 @@ class OJApp:
         self.is_search_mode = False
         self.search_field.value = ""
 
-        self.set_header(
-            "",
-            "Название темы",
-            False,
-            multiline=False,
-            show_add=True,
-        )
-
-        self.input_field.value = ""
+        self.update_breadcrumbs()
         self.clear_error()
         self.clear_list()
         self.update_page()
 
         try:
             themes = await self.api_get("/themes")
-            self.render_themes(themes)
+            for theme in themes:
+                self.items_list.controls.append(
+                    self.make_item(
+                        item=theme,
+                        name=theme["name"],
+                        created_at=theme.get("created_at", ""),
+                        on_click=lambda e, t=theme: self.app_page.run_task(
+                            self.load_subthemes, t
+                        ),
+                        item_type="theme",
+                    )
+                )
         except Exception as ex:
             self.show_error(f"Ошибка загрузки тем: {ex}")
 
         self.update_empty_state()
         self.update_page()
 
-    def render_themes(self, themes: list):
-        for theme in themes:
-            self.items_list.controls.append(
-                self.make_item(
-                    item=theme,
-                    name=theme["name"],
-                    created_at=theme.get("created_at", ""),
-                    on_click=lambda e, t=theme: self.app_page.run_task(
-                        self.load_subthemes, t
-                    ),
-                    item_type="theme",
-                )
-            )
-
     async def load_subthemes(self, theme: dict):
         self.current_theme = theme
         self.current_subtheme = None
         self.is_search_mode = False
 
-        self.set_header(
-            theme["name"],
-            "Название подтемы",
-            True,
-            multiline=False,
-            show_add=True,
-        )
-
-        self.input_field.value = ""
+        self.update_breadcrumbs()
         self.clear_error()
         self.clear_list()
         self.update_page()
 
         try:
             subthemes = await self.api_get(f"/themes/{theme['id']}/subthemes")
-            self.render_subthemes(subthemes)
+            for subtheme in subthemes:
+                self.items_list.controls.append(
+                    self.make_item(
+                        item=subtheme,
+                        name=subtheme["name"],
+                        created_at=subtheme.get("created_at", ""),
+                        on_click=lambda e, s=subtheme: self.app_page.run_task(
+                            self.load_records, s
+                        ),
+                        item_type="subtheme",
+                    )
+                )
         except Exception as ex:
             self.show_error(f"Ошибка загрузки подтем: {ex}")
 
         self.update_empty_state()
         self.update_page()
 
-    def render_subthemes(self, subthemes: list):
-        for subtheme in subthemes:
-            self.items_list.controls.append(
-                self.make_item(
-                    item=subtheme,
-                    name=subtheme["name"],
-                    created_at=subtheme.get("created_at", ""),
-                    on_click=lambda e, s=subtheme: self.app_page.run_task(
-                        self.load_records, s
-                    ),
-                    item_type="subtheme",
-                )
-            )
-
     async def load_records(self, subtheme: dict):
         self.current_subtheme = subtheme
         self.is_search_mode = False
 
-        theme_name = self.current_theme["name"] if self.current_theme else ""
-        section = (
-            f"{theme_name} - {subtheme['name']}" if theme_name else subtheme["name"]
-        )
-
-        self.set_header(
-            section,
-            "Текст заметки",
-            True,
-            multiline=True,
-            show_add=True,
-        )
-
-        self.input_field.value = ""
+        self.update_breadcrumbs()
         self.clear_error()
         self.clear_list()
         self.update_page()
 
         try:
             records = await self.api_get(f"/subthemes/{subtheme['id']}/records")
-            self.render_records(records)
+            for record in records:
+                self.items_list.controls.append(
+                    self.make_record_item(
+                        record=record,
+                        content=record["content"],
+                        created_at=record.get("created_at", ""),
+                    )
+                )
         except Exception as ex:
             self.show_error(f"Ошибка загрузки заметок: {ex}")
 
         self.update_empty_state()
         self.update_page()
 
-    def render_records(self, records: list):
-        for record in records:
-            self.items_list.controls.append(
-                self.make_record_item(
-                    record=record,
-                    content=record["content"],
-                    created_at=record.get("created_at", ""),
-                )
-            )
-
-    async def go_back(self, e=None):
-        if self.is_search_mode:
-            self.is_search_mode = False
-            if self.current_subtheme is not None:
-                await self.load_records(self.current_subtheme)
-            elif self.current_theme is not None:
-                await self.load_subthemes(self.current_theme)
-            else:
-                await self.load_themes()
-            return
-
-        if self.current_subtheme is not None:
-            if self.current_theme is not None:
-                await self.load_subthemes(self.current_theme)
-            else:
-                await self.load_themes()
-        elif self.current_theme is not None:
-            await self.load_themes()
-
-    async def add_item(self, e=None):
-        text = (self.input_field.value or "").strip()
-        if not text:
-            return
-
-        self.add_button.disabled = True
-        self.clear_error()
-        self.update_page()
-
-        try:
-            await self.create_item(text)
-        except Exception as ex:
-            self.show_error(f"Ошибка при добавлении: {ex}")
-        finally:
-            self.add_button.disabled = False
-            self.update_page()
-
     async def create_item(self, text: str):
         if self.current_subtheme is not None:
-            await self.create_record(text)
+            await self.api_post(
+                f"/subthemes/{self.current_subtheme['id']}/records",
+                {"content": text},
+            )
+            await self.load_records(self.current_subtheme)
         elif self.current_theme is not None:
-            await self.create_subtheme(text)
+            await self.api_post(
+                f"/themes/{self.current_theme['id']}/subthemes",
+                {"name": text},
+            )
+            await self.load_subthemes(self.current_theme)
         else:
-            await self.create_theme(text)
-
-    async def create_theme(self, name: str):
-        await self.api_post("/themes", {"name": name})
-        await self.load_themes()
-
-    async def create_subtheme(self, name: str):
-        theme = self.current_theme
-        await self.api_post(
-            f"/themes/{theme['id']}/subthemes",
-            {"name": name},
-        )
-        await self.load_subthemes(theme)
-
-    async def create_record(self, content: str):
-        subtheme = self.current_subtheme
-        await self.api_post(
-            f"/subthemes/{subtheme['id']}/records",
-            {"content": content},
-        )
-        await self.load_records(subtheme)
+            await self.api_post("/themes", {"name": text})
+            await self.load_themes()
 
 
 async def main(page: ft.Page):
@@ -826,7 +811,7 @@ async def main(page: ft.Page):
         color_scheme_seed=ft.Colors.INDIGO,
         visual_density=ft.VisualDensity.COMFORTABLE,
     )
-    page.padding = 20
+    page.padding = 0
 
     OJApp(page)
 
