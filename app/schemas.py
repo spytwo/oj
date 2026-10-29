@@ -39,3 +39,14 @@ class RecordRead(BaseModel):
     subtheme_id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RecordSearchRead(BaseModel):
+    id: int
+    content: str
+    created_at: datetime
+    subtheme_id: int
+    subtheme_name: str
+    theme_name: str
+
+    model_config = ConfigDict(from_attributes=True)

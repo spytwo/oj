@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.repositories.record import RecordRepository
-from app.schemas import RecordCreate, RecordRead
+from app.schemas import RecordCreate, RecordRead, RecordSearchRead
 
 router = APIRouter(tags=["Records"])
 
@@ -75,7 +75,7 @@ async def delete_record(
     await repo.delete(record)
 
 
-@router.get("/search", response_model=list[RecordRead])
+@router.get("/search", response_model=list[RecordSearchRead])
 async def search_records(
     q: str = Query(
         ..., min_length=2, description="Подстрока для поиска (минимум 2 символа)"
@@ -84,4 +84,15 @@ async def search_records(
 ):
     repo = RecordRepository(session)
     records = await repo.search_by_content(q)
-    return records
+
+    return [
+        RecordSearchRead(
+            id=r.id,
+            content=r.content,
+            created_at=r.created_at,
+            subtheme_id=r.subtheme_id,
+            subtheme_name=r.subtheme.name if r.subtheme else "",
+            theme_name=r.subtheme.theme.name if r.subtheme and r.subtheme.theme else "",
+        )
+        for r in records
+    ]

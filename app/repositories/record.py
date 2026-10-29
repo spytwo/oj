@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models import Record, Subtheme
 
@@ -47,6 +48,7 @@ class RecordRepository:
         result = await self.session.execute(
             select(Record)
             .where(Record.content.like(search_term))
+            .options(selectinload(Record.subtheme).selectinload(Subtheme.theme))
             .order_by(Record.created_at.desc())
         )
         return list(result.scalars().all())

@@ -31,7 +31,6 @@ class OJApp:
             ),
         )
 
-        # Хлебные крошки
         self.breadcrumbs_row = ft.Row(
             controls=[],
             alignment=ft.MainAxisAlignment.START,
@@ -55,7 +54,6 @@ class OJApp:
             height=48,
         )
 
-        # Кнопка «Поиск» — только иконка, белый фон с рамкой (как «Добавить»)
         self.search_button = ft.IconButton(
             icon=ft.Icons.SEARCH_ROUNDED,
             icon_size=24,
@@ -72,7 +70,6 @@ class OJApp:
             ),
         )
 
-        # Кнопка добавить в виде иконки
         self.add_button = ft.IconButton(
             icon=ft.Icons.ADD_ROUNDED,
             icon_size=24,
@@ -246,7 +243,6 @@ class OJApp:
             )
             return
 
-        # В заметках: тема (ссылка назад) + подтема (текущая)
         if self.current_subtheme and self.current_theme:
             theme = self.current_theme
             subtheme = self.current_subtheme
@@ -283,7 +279,7 @@ class OJApp:
                     color=ft.Colors.GREY_700,
                 )
             )
-        # В списке подтем: только тема
+
         elif self.current_theme:
             theme = self.current_theme
 
@@ -654,6 +650,87 @@ class OJApp:
         dialog.open = True
         self.update_page()
 
+    def make_search_item(self, item: dict) -> ft.Container:
+        content = (
+            item.get("content") or item.get("text") or item.get("name") or str(item)
+        )
+        created_at = item.get("created_at", "")
+
+        theme = item.get("theme")
+        subtheme = item.get("subtheme")
+
+        theme_name = item.get("theme_name") or (
+            theme.get("name") if isinstance(theme, dict) else None
+        )
+        subtheme_name = item.get("subtheme_name") or (
+            subtheme.get("name") if isinstance(subtheme, dict) else None
+        )
+
+        path_parts = [p for p in [theme_name, subtheme_name] if p]
+        path = " / ".join(path_parts)
+
+        meta_parts = [p for p in [path, self.format_date(created_at)] if p]
+        meta_text = " · ".join(meta_parts)
+
+        controls = []
+        if meta_text:
+            controls.append(ft.Text(value=meta_text, size=12, color=ft.Colors.GREY_500))
+        controls.append(
+            ft.Text(
+                value=content,
+                size=15,
+                color=ft.Colors.GREY_900,
+                selectable=True,
+            )
+        )
+
+        edit_btn = ft.IconButton(
+            icon=ft.Icons.EDIT_OUTLINED,
+            icon_size=18,
+            icon_color=ft.Colors.GREY_600,
+            tooltip="Редактировать",
+            on_click=lambda e, r=item: self.app_page.run_task(
+                self.open_edit_dialog, r, "record"
+            ),
+        )
+
+        delete_btn = ft.IconButton(
+            icon=ft.Icons.DELETE_OUTLINE_ROUNDED,
+            icon_size=18,
+            icon_color=ft.Colors.RED_400,
+            tooltip="Удалить",
+            on_click=lambda e, r=item: self.app_page.run_task(
+                self.confirm_delete, r, "record"
+            ),
+        )
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Column(
+                        controls=controls,
+                        spacing=6,
+                        tight=True,
+                        expand=True,
+                    ),
+                    edit_btn,
+                    delete_btn,
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                spacing=4,
+            ),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=12),
+            bgcolor=ft.Colors.WHITE,
+            border=ft.Border.all(1, ft.Colors.GREY_200),
+            border_radius=12,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=4,
+                color=ft.Colors.with_opacity(0.04, ft.Colors.BLACK),
+                offset=ft.Offset(0, 1),
+            ),
+        )
+
     async def do_search(self, e=None):
         query = (self.search_field.value or "").strip()
         if not query:
@@ -661,7 +738,6 @@ class OJApp:
 
         self.is_search_mode = True
         self.update_breadcrumbs()
-
         self.clear_error()
         self.clear_list()
         self.update_page()
@@ -669,30 +745,7 @@ class OJApp:
         try:
             results = await self.api_get("/search", params={"q": query})
             for item in results:
-                content = (
-                    item.get("content")
-                    or item.get("text")
-                    or item.get("name")
-                    or str(item)
-                )
-                created_at = item.get("created_at", "")
-                extra = ""
-                if item.get("theme_name") or item.get("subtheme_name"):
-                    parts = [
-                        p
-                        for p in [item.get("theme_name"), item.get("subtheme_name")]
-                        if p
-                    ]
-                    extra = " / ".join(parts)
-
-                self.items_list.controls.append(
-                    self.make_record_item(
-                        record=item,
-                        content=content,
-                        created_at=created_at,
-                        extra=extra,
-                    )
-                )
+                self.items_list.controls.append(self.make_search_item(item))
         except Exception as ex:
             self.show_error(f"Ошибка поиска: {ex}")
 
