@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import os
 import re
 from datetime import datetime, timedelta, timezone
@@ -8,6 +9,13 @@ import httpx
 from parser import fetch_title
 
 API_URL = os.getenv("API_URL", "http://oj:8018")
+API_USER = os.getenv("API_USER", "admin")
+API_PASSWORD = os.getenv("API_PASSWORD", "changeme")
+
+AUTH_HEADER = (
+    "Basic " + base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
+)
+
 LOCAL_TIMEZONE = timezone(timedelta(hours=5))
 
 URL_PATTERN = re.compile(r"(https?://[^\s]+)")
@@ -49,9 +57,10 @@ class OJApp:
             expand=True,
             filled=True,
             bgcolor=ft.Colors.WHITE,
-            border_radius=12,
-            border_color=ft.Colors.GREY_300,
-            focused_border_color=ft.Colors.INDIGO_400,
+            border=ft.OutlineInputBorder(
+                border_radius=12,
+                side=ft.BorderSide(1, ft.Colors.GREY_300),
+            ),
             content_padding=ft.Padding.symmetric(horizontal=14, vertical=12),
             text_size=14,
             cursor_color=ft.Colors.INDIGO_600,
@@ -493,26 +502,32 @@ class OJApp:
             ),
         )
 
+    def _client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(
+            timeout=10,
+            headers={"Authorization": AUTH_HEADER},
+        )
+
     async def api_get(self, path: str, params: dict | None = None):
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with self._client() as client:
             response = await client.get(f"{API_URL}{path}", params=params)
             response.raise_for_status()
             return response.json()
 
     async def api_post(self, path: str, data: dict):
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with self._client() as client:
             response = await client.post(f"{API_URL}{path}", json=data)
             response.raise_for_status()
             return response.json()
 
     async def api_patch(self, path: str, data: dict):
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with self._client() as client:
             response = await client.patch(f"{API_URL}{path}", json=data)
             response.raise_for_status()
             return response.json()
 
     async def api_delete(self, path: str):
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with self._client() as client:
             response = await client.delete(f"{API_URL}{path}")
             response.raise_for_status()
             return response

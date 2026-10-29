@@ -1,8 +1,9 @@
-.venv/
-__pycache__/
-*.py[cod]
-.git/
-.idea/
-.vscode/
-.pytest_cache/
-frontend/.flet/
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.env
+data/

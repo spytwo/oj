@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
+from app.auth import verify_credentials
 from app.database import async_engine
 from app.models import Base
 from app.routers.record import router as record_router
@@ -19,6 +20,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="oj", lifespan=lifespan)
 
-app.include_router(theme_router)
-app.include_router(subtheme_router)
-app.include_router(record_router)
+app.include_router(theme_router, dependencies=[Depends(verify_credentials)])
+app.include_router(subtheme_router, dependencies=[Depends(verify_credentials)])
+app.include_router(record_router, dependencies=[Depends(verify_credentials)])

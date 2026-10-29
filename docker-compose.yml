@@ -2,6 +2,8 @@ services:
   app:
     build: .
     container_name: oj
+    env_file:
+      - .env
     ports:
       - "127.0.0.1:8018:8018"
     volumes:
@@ -17,5 +19,7 @@ services:
       - "127.0.0.1:8550:8550"
     environment:
       API_URL: http://app:8018
+      API_USER: ${USERNAME}
+      API_PASSWORD: ${PASSWORD}
     depends_on:
       - app
