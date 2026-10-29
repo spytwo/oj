@@ -1,11 +1,16 @@
+import asyncio
 import os
+import re
 from datetime import datetime, timedelta, timezone
 
 import flet as ft
 import httpx
+from parser import fetch_title
 
 API_URL = os.getenv("API_URL", "http://oj:8018")
 LOCAL_TIMEZONE = timezone(timedelta(hours=5))
+
+URL_PATTERN = re.compile(r"(https?://[^\s]+)")
 
 
 class OJApp:
@@ -308,6 +313,37 @@ class OJApp:
     def clear_list(self):
         self.items_list.controls.clear()
 
+    def _build_rich_text(self, content: str) -> ft.Control:
+        parts = URL_PATTERN.split(content)
+
+        spans = []
+        for part in parts:
+            if URL_PATTERN.fullmatch(part):
+                link_span = ft.TextSpan(
+                    text=part,
+                    url=part,
+                    style=ft.TextStyle(
+                        color=ft.Colors.INDIGO_600,
+                        decoration=ft.TextDecoration.UNDERLINE,
+                    ),
+                )
+                spans.append(link_span)
+
+                self.app_page.run_task(self._fetch_and_update_title, link_span, part)
+            else:
+                if part:
+                    spans.append(ft.TextSpan(text=part))
+
+        return ft.Text(spans=spans, size=15, color=ft.Colors.GREY_900, selectable=True)
+
+    async def _fetch_and_update_title(self, span: ft.TextSpan, url: str):
+        title = await asyncio.to_thread(fetch_title, url)
+
+        if title:
+            span.text = title
+            span.style.decoration = ft.TextDecoration.NONE
+            self.update_page()
+
     def make_item(
         self,
         item: dict,
@@ -408,14 +444,7 @@ class OJApp:
                 )
             )
 
-        controls.append(
-            ft.Text(
-                value=content,
-                size=15,
-                color=ft.Colors.GREY_900,
-                selectable=True,
-            )
-        )
+        controls.append(self._build_rich_text(content))
 
         edit_btn = ft.IconButton(
             icon=ft.Icons.EDIT_OUTLINED,
@@ -656,15 +685,8 @@ class OJApp:
         )
         created_at = item.get("created_at", "")
 
-        theme = item.get("theme")
-        subtheme = item.get("subtheme")
-
-        theme_name = item.get("theme_name") or (
-            theme.get("name") if isinstance(theme, dict) else None
-        )
-        subtheme_name = item.get("subtheme_name") or (
-            subtheme.get("name") if isinstance(subtheme, dict) else None
-        )
+        theme_name = item.get("theme_name")
+        subtheme_name = item.get("subtheme_name")
 
         path_parts = [p for p in [theme_name, subtheme_name] if p]
         path = " / ".join(path_parts)
@@ -675,14 +697,8 @@ class OJApp:
         controls = []
         if meta_text:
             controls.append(ft.Text(value=meta_text, size=12, color=ft.Colors.GREY_500))
-        controls.append(
-            ft.Text(
-                value=content,
-                size=15,
-                color=ft.Colors.GREY_900,
-                selectable=True,
-            )
-        )
+
+        controls.append(self._build_rich_text(content))
 
         edit_btn = ft.IconButton(
             icon=ft.Icons.EDIT_OUTLINED,
