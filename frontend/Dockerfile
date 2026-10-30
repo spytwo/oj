@@ -10,6 +10,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
+RUN sed -i 's/content="Flet"/content="Our Journal"/g; s/<title>Flet<\/title>/<title>Our Journal<\/title>/g' \
+    /opt/venv/lib/python3.13/site-packages/flet_web/web/index.html
 COPY frontend/ /app/
 EXPOSE 8550
 CMD ["flet", "run", "--web", "--host", "0.0.0.0", "--port", "8550", "main.py"]

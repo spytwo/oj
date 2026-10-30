@@ -977,7 +977,7 @@ class OJApp:
 
 
 async def main(page: ft.Page):
-    page.title = "OJ"
+    page.title = "Our Journal"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = ft.Colors.GREY_50
     page.theme = ft.Theme(
