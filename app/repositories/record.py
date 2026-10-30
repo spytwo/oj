@@ -28,7 +28,7 @@ class RecordRepository:
         return record
 
     async def update(self, record: Record, content: str) -> Record:
-        record.content = content
+        record.content = content.lower()
         await self.session.commit()
         await self.session.refresh(record)
         return record
