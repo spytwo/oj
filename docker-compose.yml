@@ -17,9 +17,9 @@ services:
     container_name: oj-frontend
     ports:
       - "127.0.0.1:8550:8550"
+    env_file:
+      - .env
     environment:
       API_URL: http://app:8018
-      API_USER: ${USERNAME}
-      API_PASSWORD: ${PASSWORD}
     depends_on:
       - app

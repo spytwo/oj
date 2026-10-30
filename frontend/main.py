@@ -9,16 +9,86 @@ import httpx
 from parser import fetch_title
 
 API_URL = os.getenv("API_URL", "http://oj:8018")
-API_USER = os.getenv("API_USER", "admin")
-API_PASSWORD = os.getenv("API_PASSWORD", "changeme")
+
+API_USER = os.getenv("USERNAME")
+API_PASSWORD = os.getenv("PASSWORD")
+
+if not API_USER or not API_PASSWORD:
+    raise RuntimeError("USERNAME и PASSWORD должны быть заданы в окружении")
 
 AUTH_HEADER = (
     "Basic " + base64.b64encode(f"{API_USER}:{API_PASSWORD}".encode()).decode()
 )
 
 LOCAL_TIMEZONE = timezone(timedelta(hours=5))
-
 URL_PATTERN = re.compile(r"(https?://[^\s]+)")
+
+AUTH_KEY = "oj.authenticated"
+
+
+async def show_login(page: ft.Page, prefs: ft.SharedPreferences):
+    page.clean()
+
+    username_field = ft.TextField(
+        label="Логин",
+        autofocus=True,
+        border_radius=12,
+        width=320,
+    )
+    password_field = ft.TextField(
+        label="Пароль",
+        password=True,
+        can_reveal_password=True,
+        border_radius=12,
+        width=320,
+        on_submit=lambda e: page.run_task(try_login),
+    )
+    error_text = ft.Text(value="", color=ft.Colors.RED_600, size=13)
+
+    async def try_login(e=None):
+        username = (username_field.value or "").strip()
+        password = password_field.value or ""
+
+        if username == API_USER and password == API_PASSWORD:
+            await prefs.set(AUTH_KEY, True)
+            page.clean()
+            OJApp(page)
+        else:
+            error_text.value = "Неверный логин или пароль"
+            page.update()
+
+    login_button = ft.FilledButton(
+        "Войти",
+        width=320,
+        height=48,
+        on_click=lambda e: page.run_task(try_login),
+    )
+
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Our Journal",
+                        size=28,
+                        weight=ft.FontWeight.W_700,
+                        color=ft.Colors.INDIGO_800,
+                    ),
+                    ft.Container(height=24),
+                    username_field,
+                    password_field,
+                    error_text,
+                    ft.Container(height=8),
+                    login_button,
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=12,
+            ),
+            alignment=ft.Alignment.TOP_CENTER,
+            padding=ft.Padding.only(top=120),
+            expand=True,
+        )
+    )
 
 
 class OJApp:
@@ -142,16 +212,14 @@ class OJApp:
         main_column = ft.Column(
             controls=[
                 ft.Container(
-                    content=ft.Row(
-                        controls=[
-                            self.logo,
-                            self.breadcrumbs_row,
-                        ],
-                        alignment=ft.MainAxisAlignment.START,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=4,
-                    ),
-                    padding=ft.Padding.only(bottom=4),
+                    content=self.logo,
+                    padding=ft.Padding.only(bottom=6),
+                ),
+                ft.Container(
+                    content=self.breadcrumbs_row,
+                    height=28,
+                    alignment=ft.Alignment.CENTER_LEFT,
+                    margin=ft.Margin.only(bottom=16),
                 ),
                 ft.Container(
                     content=ft.Row(
@@ -164,7 +232,7 @@ class OJApp:
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=10,
                     ),
-                    padding=ft.Padding.only(top=6, bottom=6),
+                    padding=ft.Padding.only(top=2, bottom=6),
                 ),
                 self.status_text,
                 ft.Stack(
@@ -176,7 +244,7 @@ class OJApp:
                 ),
             ],
             expand=True,
-            spacing=6,
+            spacing=4,
         )
 
         centered_container = ft.Container(
@@ -337,7 +405,6 @@ class OJApp:
                     ),
                 )
                 spans.append(link_span)
-
                 self.app_page.run_task(self._fetch_and_update_title, link_span, part)
             else:
                 if part:
@@ -347,7 +414,6 @@ class OJApp:
 
     async def _fetch_and_update_title(self, span: ft.TextSpan, url: str):
         title = await asyncio.to_thread(fetch_title, url)
-
         if title:
             span.text = title
             span.style.decoration = ft.TextDecoration.NONE
@@ -897,7 +963,14 @@ async def main(page: ft.Page):
     )
     page.padding = 0
 
-    OJApp(page)
+    prefs = ft.SharedPreferences()
+    page.services.append(prefs)
+
+    authenticated = await prefs.get(AUTH_KEY)
+    if authenticated:
+        OJApp(page)
+    else:
+        await show_login(page, prefs)
 
 
 if __name__ == "__main__":
