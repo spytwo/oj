@@ -52,7 +52,7 @@ async def show_login(page: ft.Page, prefs: ft.SharedPreferences):
         if username == API_USER and password == API_PASSWORD:
             await prefs.set(AUTH_KEY, True)
             page.clean()
-            OJApp(page)
+            OJApp(page, prefs)
         else:
             error_text.value = "Неверный логин или пароль"
             page.update()
@@ -92,8 +92,9 @@ async def show_login(page: ft.Page, prefs: ft.SharedPreferences):
 
 
 class OJApp:
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, prefs: ft.SharedPreferences):
         self.app_page = page
+        self.prefs = prefs
 
         self.current_theme = None
         self.current_subtheme = None
@@ -112,6 +113,16 @@ class OJApp:
                 overlay_color=ft.Colors.with_opacity(0.08, ft.Colors.INDIGO),
                 shape=ft.RoundedRectangleBorder(radius=8),
             ),
+        )
+
+        self.logout_button = ft.IconButton(
+            icon=ft.Icons.LOGOUT_ROUNDED,
+            icon_size=22,
+            icon_color=ft.Colors.INDIGO_800,
+            tooltip="Выйти",
+            on_click=lambda e: self.app_page.run_task(self.logout),
+            height=44,
+            width=44,
         )
 
         self.breadcrumbs_row = ft.Row(
@@ -212,7 +223,14 @@ class OJApp:
         main_column = ft.Column(
             controls=[
                 ft.Container(
-                    content=self.logo,
+                    content=ft.Row(
+                        controls=[
+                            self.logo,
+                            ft.Container(expand=True),
+                            self.logout_button,
+                        ],
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
                     padding=ft.Padding.only(bottom=6),
                 ),
                 ft.Container(
@@ -263,6 +281,11 @@ class OJApp:
 
         self.app_page.clean()
         self.app_page.add(page_wrapper)
+
+    async def logout(self):
+        # Удаляем только флаг входа; логин и пароль в браузере не сохраняются.
+        await self.prefs.remove(AUTH_KEY)
+        await show_login(self.app_page, self.prefs)
 
     def update_page(self):
         self.app_page.update()
@@ -968,7 +991,7 @@ async def main(page: ft.Page):
 
     authenticated = await prefs.get(AUTH_KEY)
     if authenticated:
-        OJApp(page)
+        OJApp(page, prefs)
     else:
         await show_login(page, prefs)
 
