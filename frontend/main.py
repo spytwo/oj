@@ -335,7 +335,7 @@ class OJApp:
                 parsed = parsed.replace(tzinfo=timezone.utc)
             local_time = parsed.astimezone(LOCAL_TIMEZONE)
             month = months[local_time.month - 1]
-            return f"{local_time.day} {month} {local_time.year} г., {local_time:%H:%M}"
+            return f"{local_time.day} {month} {local_time.year}"
         except (ValueError, TypeError):
             return str(value)
 
@@ -494,7 +494,7 @@ class OJApp:
         delete_btn = ft.IconButton(
             icon=ft.Icons.DELETE_OUTLINE_ROUNDED,
             icon_size=18,
-            icon_color=ft.Colors.RED_400,
+            icon_color=ft.Colors.GREY_600,
             tooltip="Удалить",
             on_click=lambda e, it=item, t=item_type: self.app_page.run_task(
                 self.confirm_delete, it, t
@@ -538,7 +538,7 @@ class OJApp:
                 ft.Text(
                     value=" · ".join(meta_parts),
                     size=12,
-                    color=ft.Colors.GREY_500,
+                    color=ft.Colors.PINK,
                 )
             )
 
@@ -557,7 +557,7 @@ class OJApp:
         delete_btn = ft.IconButton(
             icon=ft.Icons.DELETE_OUTLINE_ROUNDED,
             icon_size=18,
-            icon_color=ft.Colors.RED_400,
+            icon_color=ft.Colors.GREY_600,
             tooltip="Удалить",
             on_click=lambda e, r=record: self.app_page.run_task(
                 self.confirm_delete, r, "record"
@@ -817,7 +817,7 @@ class OJApp:
         delete_btn = ft.IconButton(
             icon=ft.Icons.DELETE_OUTLINE_ROUNDED,
             icon_size=18,
-            icon_color=ft.Colors.RED_400,
+            icon_color=ft.Colors.GREY_600,
             tooltip="Удалить",
             on_click=lambda e, r=item: self.app_page.run_task(
                 self.confirm_delete, r, "record"
