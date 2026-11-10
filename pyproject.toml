@@ -17,3 +17,10 @@ dev = [
     "flet-cli>=1.0.5",
     "flet-web>=1.0.5",
 ]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "W", "C"]
+ignore = ["E501", "B008"]
